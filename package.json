@@ -1,6 +1,6 @@
 {
   "name": "union-tcp",
-  "version": "1.0.1-a3",
+  "version": "1.0.1-a4",
   "description": "union famale male tcp",
   "main": "index.js",
   "scripts": {
@@ -16,5 +16,17 @@
   "license": "ISC",
   "dependencies": {
     "uuid": "^8.3.1"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ybzmh/union-tcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ybzmh/union-tcp/issues"
+  },
+  "homepage": "https://github.com/ybzmh/union-tcp#readme"
 }
