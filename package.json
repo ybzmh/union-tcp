@@ -1,0 +1,20 @@
+{
+  "name": "union-tcp",
+  "version": "1.0.1-a3",
+  "description": "union famale male tcp",
+  "main": "index.js",
+  "scripts": {
+    "test": "./test/test.js"
+  },
+  "keywords": [
+    "union",
+    "famale",
+    "male",
+    "tcp"
+  ],
+  "author": "ybzmh",
+  "license": "ISC",
+  "dependencies": {
+    "uuid": "^8.3.1"
+  }
+}
