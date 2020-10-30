@@ -1,5 +1,5 @@
 let male = require('./src/union-tcp-male')
-let conf = {host: "10.0.135.223", port: 60001 }
+let conf = {host: "218.89.69.23", port: 60001,id:"tjy" }
 male.createNew(conf)
 
 

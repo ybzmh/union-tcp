@@ -23,6 +23,8 @@ app.createNew = function (conf) {
     let client = net.connect(conf);
 
     client.on('connect', () => {
+        let msg =JSON.stringify({cmd:'login',id:conf.id,dt1:getDateStr()})
+        client.write(msg);        
         logs('famale connect ok', 'connect')
     });
     client.on('error', (err) => {
@@ -31,7 +33,6 @@ app.createNew = function (conf) {
     client.on('close', () => {
         logs(`connect to ${conf.host}:${conf.port} is closed`, 'close')
     });
-
     
     let list = []
     client.on('data', (data) => {
@@ -45,6 +46,7 @@ app.createNew = function (conf) {
                 let ca = net.connect(r.local.port, r.local.ip, () => {
                     caok = 1
                     //返回map 服务器，并打通连接
+                    console.log(r)
                     ca.write(JSON.stringify({ id: r.id }))
                     logs(`connect to ${r.local.ip}:${r.local.port} ok`, 'connect')
                     if (caok && cbok) {
@@ -109,9 +111,9 @@ app.createNew = function (conf) {
 
     setInterval(() => {
         if (client && !client.destroyed) {
-            let msg =JSON.stringify({cmd:'heart'})
+            let msg =JSON.stringify({cmd:'heart',id:conf.id,dt1:getDateStr()})
             client.write(msg);
-            logs(msg)        
+            //logs(msg)        
         } else {
             if (!client.connecting) {
                 logs('reconnect to famale  .... ')

@@ -5,7 +5,7 @@ let app = {}
 
 app.createNew = function (config) {
     let unions = []
-    let msocket
+    let males =[]
 //------------------函数
     //按ID 从列表中获取socket
     function getunionbyid(id) {
@@ -17,6 +17,9 @@ app.createNew = function (config) {
     function addunion(i) {
         unions.push(i);
     }
+
+
+
     function delunionbyid(id) {
         for (let i = unions.length - 1; i >= 0; i--) {
             if (unions[i].id == id) {
@@ -27,6 +30,30 @@ app.createNew = function (config) {
         }
         logs('unions count:' + unions.length)
     }
+
+    function delmalesbyid(id) {
+        for (let i = males.length - 1; i >= 0; i--) {
+            if (males[i].maleid == id) {
+                males[i].destroy()
+                males.splice(i, 1)
+            }
+        }
+        logs('males count:' + unions.length)
+    }
+
+    function getmalesbyid(id) {
+        for (let i = males.length - 1; i >= 0; i--) {
+            if (males[i].maleid == id) {
+                if (!males[i].destroyed) {
+                    return males[i]
+                }
+            }
+        }
+        logs('not males:' + id)
+        males.map(i=>{console.log(i.maleid)})
+        return null
+    }
+    
     function getDateStr() {
         return (new Date()).toLocaleString();
     }
@@ -41,10 +68,13 @@ app.createNew = function (config) {
         let srv0 = net.createServer((c) => {
             let id = uuid.v1()
             addunion({ id, insocket: c, remote: conf0.remote })
-            if (msocket && !msocket.destroyed) {
+            //根据 配置的ID找到接入的male socket
+            let socket= getmalesbyid(conf0.remote.id)
+            //console.log(socket)
+            if (socket && !socket.destroyed) {
                 let sendmsg = JSON.stringify({ cmd: 'createTrunking', id: id, local: { ip: config.out.host, port: config.out.port }, remote: conf0.remote })
-                logs(`[local->${msocket.localAddress}:${msocket.localPort}==remote->${msocket.remoteAddress}:${msocket.remotePort}]  send:` + sendmsg, 'data');
-                msocket.write(sendmsg)
+                logs(`[local->${socket.localAddress}:${socket.localPort}==remote->${socket.remoteAddress}:${socket.remotePort}]  send:` + sendmsg, 'data');
+                socket.write(sendmsg)
             } else {
                 c.destroy()
             }
@@ -55,7 +85,7 @@ app.createNew = function (config) {
             c.on('error', (err) => {
                 logs('unions count:' + unions.length)
                 //logs(id)
-                unions.map(i => { logs(i.id) })
+                //unions.map(i => { logs(i.id) })
                 delunionbyid(id);
                 logs(`IN SERVER remote->${c.remoteAddress}:${c.remotePort}]  error:` + err, 'error');
             });
@@ -66,12 +96,10 @@ app.createNew = function (config) {
     }
 
 
+
     //控制协议服务
     let srv1 = net.createServer((c) => {
-        if (msocket && !msocket.destroyed) {
-            msocket.destroy()
-        }
-        msocket = c
+          
         logs(`CONTROL SERVER remote->${c.remoteAddress}:${c.remotePort}]  connect`, 'connect');
         c.on('error', (err) => {
             logs(`CONTROL SERVER remote->${c.remoteAddress}:${c.remotePort}]  error:` + err, 'error');
@@ -80,15 +108,31 @@ app.createNew = function (config) {
         c.on('close', () => {
             logs(`CONTROL SERVER remote->${c.remoteAddress}:${c.remotePort}]  closed`, 'close');
             c.destroy()
+            if (c.maleid ) {
+                delmalesbyid(c.maleid)
+                logs(c.maleid+' deleted')
+            }            
         })
         c.on('data', data => {
             let r
             logs(`CONTROL SERVER remote->${c.remoteAddress}:${c.remotePort}] recieve:` + data.toString());
             try {
+                try {
                 r = JSON.parse(data.toString())
                 if (r.cmd == 'close') {
 
                 }
+                if (r.cmd == 'login') {
+
+                   c.maleid =r.id  
+                   males.push(c)          
+                   logs(r.id+' male login ok')
+                }
+            } catch (e) {
+                c.destroy();
+                logs('CONTROL SERVER'+e)
+            }
+                
             } catch (e) {
 
             }
@@ -116,10 +160,23 @@ app.createNew = function (config) {
         c.on('data', data => {
             //如果是第一个包，获取id0,g根据id0 得到 socket,
             if (icount == 0) {
-                let r = JSON.parse(data.toString())
+                //console.log(data.toString())
+                let r 
+                try {
+                    r = JSON.parse(data.toString())
+                } catch(e) {
+                    c.destroy();
+                    logs('OUT SERVER:'+e) 
+                    return 
+                }
+                if (!r.id) {
+                    c.destroy()
+                    return
+                }
                 id = r.id
                 union = getunionbyid(id)
                 union.outsocket = c
+                //通道建立成功
                 logs(`path: ${union.insocket.localPort} to ${union.remote.ip}:${union.remote.port} binding ok`)
                 c.on('close', () => {
                     logs(`OUT SERVER remote->${union.remote.ip}:${union.remote.port}  close`, 'close');
