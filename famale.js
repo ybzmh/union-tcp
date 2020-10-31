@@ -1,5 +1,5 @@
 let famale = require('./index').famale
-let publicip ='218.89.69.23'
+let publicip ='127.0.0.1'
 let config = {
     in: { host: "0.0.0.0", port: 60001 },
     out: { host: publicip, port: 60002 },
